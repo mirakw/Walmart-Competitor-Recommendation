@@ -1,0 +1,334 @@
+---
+title: "MGSC410HW4"
+author: "Mira Wadehra"
+date: "11/13/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+```{r cars}
+getwd()
+weststore <- read.csv("MGSC410Datasets/west.csv")
+weststore
+northeaststore <-read.csv("MGSC410Datasets/norteast.csv")
+northeaststore %>% summary()
+midweststore <-read.csv("MGSC410Datasets/midwest.csv")
+midweststore %>% summary()
+southstore <-read.csv("MGSC410Datasets/south.csv")
+southstore %>% summary()
+
+sales<-read.csv("MGSC410Datasets/sales.csv")
+sales 
+features <-read.csv("MGSC410Datasets/features.csv")
+features %>% summary()
+storesdma <-read.csv("MGSC410Datasets/storeswithDMA.csv")
+storesdma
+storesdmacleaned <- storesdma  %>% mutate(across(c("DMA"), ~ifelse(.=="Los Angeles", "LA", as.character(.)))) %>%  mutate(across(c("DMA"), ~ifelse(.=="Philadelphia", "Philly",as.character(.)))) %>%  mutate(across(c("DMA"), ~ifelse(.=="Oralando-Daytona Brach-Melbourne FL", "Orlando-Daytona Brach-Melbourne",as.character(.))))
+
+salesfeatures <- merge(sales,features, by=c("Store","Date"))
+salesfeatures
+
+salesstoresdma <- merge(sales, storesdma, by=c("Store"))
+salesstoresdma
+
+salesstoresdmaclean <- merge(sales, storesdmacleaned, by=c("Store"))
+salesstoresdmaclean
+
+```
+
+what store type is most popular?
+```{r pressure, echo=FALSE}
+type_counts <- salesstoresdma %>% group_by(Type) %>% count(Type)
+type_counts
+
+ggplot(storesdma) + aes(Type,fill= Type) + geom_bar() +geom_text(stat='count', aes(label=..count..), vjust=1.6, color="black")  + labs(title= 'Number of Types', fill="Type") +  theme_minimal()
+```
+
+```{r pressure, echo=FALSE}
+ggplot(storesdma) + aes(DMA,fill= DMA) + geom_bar() +geom_text(stat='count', aes(label=..count..), vjust=1.6, color="black")  + labs(title= 'Number of Stores per Location', fill="DMA/Location") +  theme_minimal() +theme(axis.text.x = element_text(angle = 90, vjust = 0.5),plot.title = element_text(hjust = 0.5), legend.position="none")
+```
+
+
+
+```{r pressure, echo=FALSE}
+max_sales <- sales %>% 
+  group_by(Store) %>%
+  summarize(totalsales=sum(Weekly_Sales)) %>% arrange(desc(totalsales))
+max_sales 
+ggplot(max_sales,aes(x=factor(Store),y=totalsales,fill=totalsales)) + geom_col()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5),plot.title = element_text(hjust = 0.5))+xlab("Store")+ggtitle("Sales by Stores")
+
+```
+
+
+```{r pressure, echo=FALSE}
+average_sales_per_location <- sales %>% 
+  group_by(Store) %>%
+  summarize_at(vars(Weekly_Sales),list(average_sales_per_location = mean))
+average_sales_per_location %>% arrange(desc(average_sales_per_location))
+
+average_sales_per_location2 <- sales %>% 
+  summarize_at(vars(Weekly_Sales),list(average_sales_per_location2 = mean))
+average_sales_per_location2 %>% arrange(desc(average_sales_per_location2))
+
+ggplot(average_sales_per_location,aes(x=factor(Store),y=average_sales_per_location,fill=average_sales_per_location)) + geom_col()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5),plot.title = element_text(hjust = 0.5))+xlab("Store")+ggtitle("Average Sales by Stores")
+
+```
+
+
+average sales per location per type 
+```{r pressure, echo=FALSE}
+ggplot(storesdmacleaned) + aes(DMA,fill= Type) + geom_bar() + labs(title= 'Number of Types per DMA', fill="Type") + theme(axis.text.x = element_text(angle = 100, vjust = .5))+ theme_minimal()
+
+storesdmacleaned
+type_mean_sales <- salesstoresdma %>% group_by(DMA, Type) %>% summarize_at(vars(Weekly_Sales),list(avg_type_sales = mean))
+type_mean_sales
+
+levels(factor(type_mean_sales$Type))
+
+ggplot(type_mean_sales, aes(x=Type,y=avg_type_sales, fill=Type)) +facet_wrap(~DMA)+ geom_bar(stat='identity') + ggtitle("Mean Sales for each Type in each Location") +theme(axis.text.x = element_text(angle = 0, size = 0))
+
+ggplot(type_mean_sales) + aes(Type,avg_type_sales)+facet_wrap(~DMA) + geom_bar()
+```
+average sales per location per type 
+```{r pressure, echo=FALSE}
+ggplot(storesdmacleaned) + aes(DMA,fill= Type) + geom_bar() + labs(title= 'Number of Types per DMA', fill="Type") + theme(axis.text.x = element_text(angle = 100, vjust = .5))+ theme_minimal()
+
+storesdmacleaned
+type_mean_sales <- salesstoresdma %>% group_by(DMA, Type) %>% summarize_at(vars(Weekly_Sales),list(avg_type_sales = mean))
+type_mean_sales
+
+levels(factor(type_mean_sales$Type))
+
+ggplot(type_mean_sales, aes(x=Type,y=avg_type_sales, fill=Type)) +facet_wrap(~DMA)+ geom_bar(stat='identity') + ggtitle("Mean Sales for each Type in each Location") +theme(axis.text.x = element_text(angle = 0, size = 0))
+
+ggplot(type_mean_sales) + aes(Type,avg_type_sales)+facet_wrap(~DMA) + geom_bar()
+```
+
+```{r pressure, echo=FALSE}
+type_mean_sales <- salesstoresdma %>% group_by(Type) %>% summarize_at(vars(Weekly_Sales),list(avg_type_sales = mean))
+type_mean_sales
+```
+
+
+```{r pressure, echo=FALSE}
+Super_Bowl <- c("12/02/2010", "11/02/2011", "10/02/2012", "08/02/2013")
+
+Labor_Day <- c("10/09/2010", "09/09/2011", "07/09/2012", "06/09/2013")
+
+Thanksgiving <- c("26/11/2010", "25/11/2011", "23/11/2012", "29/11/2013")
+
+
+Christmas <- c("31/12/2010", "30/12/2011", "28/12/2012", "27/12/2013")
+
+
+holiday_sales <- sales %>%
+  mutate(Holiday = case_when(Date %in% Super_Bowl ~ "Super Bowl",
+                             Date %in% Labor_Day ~ "Labor Day",
+                             Date %in% Thanksgiving ~ "Thanksgiving",
+                             Date %in% Christmas ~ "Christmas",
+                             TRUE ~ "Non-Holiday"))
+
+holiday_sales
+holiday_sales_avg <- holiday_sales %>%
+  select(Weekly_Sales,Holiday) %>%
+  group_by(Holiday) %>%
+  summarise(average_sales = mean(Weekly_Sales)) %>%
+  arrange(desc(average_sales))
+
+holiday_sales_avg
+
+HolidaySales <- holiday_sales %>%
+  select(Weekly_Sales,Holiday) %>%
+  group_by(Holiday) %>%
+  summarise(average_sales = mean(Weekly_Sales))
+
+HolidaySales
+
+ggplot(HolidaySales, aes(x=Holiday,y=average_sales,fill=Holiday)) + geom_col() + ggtitle("Sales by Holidays") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r pressure, echo=FALSE}
+
+holiday_sales_DMA <- merge(holiday_sales, storesdmacleaned, by=c("Store"))
+holiday_sales_DMA
+
+HolidaySalesDMA <- holiday_sales_DMA %>%
+  select(Store,Weekly_Sales,Holiday, DMA) %>%
+  group_by(Store,Holiday, DMA) %>%
+  summarise(average_sales = mean(Weekly_Sales)) %>% arrange(desc(average_sales))
+
+HolidaySalesDMA
+
+HolidaySalesDMATG <- HolidaySalesDMA %>% filter(Holiday=="Christmas") %>% arrange(desc(average_sales))
+HolidaySalesDMATG
+
+ggplot(HolidaySalesDMA, aes(x=Holiday,y=average_sales,fill=Holiday))+facet_wrap(~DMA) + geom_col() + ggtitle("Sales by Holidays") +theme(axis.text.x = element_text(angle = 0, size = 0))
+```
+
+```{r pressure, echo=FALSE}
+
+holiday_sales_DMA <- merge(holiday_sales, storesdmacleaned, by=c("Store"))
+holiday_sales_DMA
+
+mean_holiday_sales <- holiday_sales_DMA %>% group_by(Store,Holiday, DMA, Size) %>% summarize_at(vars(Weekly_Sales), list(mean_holiday_sales = mean))
+
+mean_holiday_sales
+
+mean_holiday_salessqft <- mean_holiday_sales %>% select(Store, Holiday, DMA, Size, mean_holiday_sales) %>% 
+summarize(mean_holiday_salessqft=(mean_holiday_sales/Size)) %>%arrange(desc(mean_holiday_salessqft))
+
+mean_holiday_sales_xmas <- mean_holiday_salessqft %>% filter(Holiday=="Christmas")
+mean_holiday_sales_xmas %>% arrange(desc(mean_holiday_salessqft))
+
+ggplot(mean_holiday_sales_xmas, aes(x=Date,y=mean_holiday_sales, fill=Date))+facet_wrap(~DMA) + geom_col() + ggtitle("Sales by Christmas") +theme(axis.text.x = element_text(angle = 0, size = 0))
+
+mean_holiday_sales_tg <- mean_holiday_salessqft %>% filter(Holiday=="Thanksgiving")
+mean_holiday_sales_tg %>% arrange(desc(mean_holiday_salessqft))
+
+ggplot(mean_holiday_sales_tg, aes(x=Date,y=mean_holiday_sales, fill=Date))+facet_wrap(~DMA) + geom_col() + ggtitle("Sales by Thanksgiving") +theme(axis.text.x = element_text(angle = 0, size = 0))
+
+mean_holiday_sales_labor <- mean_holiday_salessqft %>% filter(Holiday=="Labor Day")
+mean_holiday_sales_labor%>% arrange(desc(mean_holiday_salessqft))
+
+ggplot(mean_holiday_sales_labor, aes(x=Date,y=mean_holiday_sales, fill=Date))+facet_wrap(~DMA) + geom_col() + ggtitle("Sales by Labor Day") +theme(axis.text.x = element_text(angle = 0, size = 0))
+
+mean_holiday_sales_sb <- mean_holiday_salessqft %>% filter(Holiday=="Super Bowl")
+mean_holiday_sales_sb%>% arrange(desc(mean_holiday_salessqft))
+
+ggplot(mean_holiday_sales_sb, aes(x=Date,y=mean_holiday_sales, fill=Date))+facet_wrap(~DMA) + geom_col() + ggtitle("Sales by Super Bowl") +theme(axis.text.x = element_text(angle = 0, size = 0))
+
+mean_holiday_sales_non <- mean_holiday_salessqft %>% filter(Holiday=="Non-Holiday")
+mean_holiday_sales_non%>% arrange(desc(mean_holiday_salessqft))
+```
+
+```{r pressure, echo=FALSE}
+
+holiday_sales_DMA_features<- merge(holiday_sales_DMA, features, by=c("Store", "Date"))
+holiday_sales_DMA_features 
+
+salesstore1 <- holiday_sales_DMA_features %>%
+  filter(Store==1) %>% select(-IsHoliday.y)
+
+
+salesstore1 <- salesstore1 %>%
+  arrange(Date) %>%
+  filter(duplicated(Date) == FALSE)
+
+ggplot(salesstore1,aes(x=Temperature,y=Weekly_Sales)) + geom_point() + geom_smooth(color="blue1") +ggtitle("Sales vs Temperature") +theme(plot.title = element_text(hjust = 0.5))
+cor(salesstore1$Weekly_Sales,salesstore1$Temperature)
+
+ggplot(salesstore1,aes(x=CPI,y=Weekly_Sales)) + geom_point(stat='identity', position='identity') +ggtitle("Sales vs CPI") +theme(axis.text.x = element_text(angle = 90, size = 5)) +geom_smooth(method="lm", color="red1")
+cor(salesstore1$Weekly_Sales,salesstore1$CPI)
+
+ggplot(salesstore1,aes(x=Fuel_Price,y=Weekly_Sales)) + geom_point(stat='identity', position='identity') + geom_smooth(color="red1") +ggtitle("Sales vs Fuel Prices") +theme(plot.title = element_text(hjust = 0.5))
+cor(salesstore1$Weekly_Sales,salesstore1$Fuel_Price)
+
+ggplot(salesstore1,aes(x=Unemployment,y=Weekly_Sales)) + geom_point() + geom_smooth(color="red1") +ggtitle("Sales vs Unemployment") + theme(plot.title = element_text(hjust = 0.5))
+cor(salesstore1$Weekly_Sales,salesstore1$Unemployment)
+```
+
+```{r pressure, echo=FALSE}
+southweststores <- merge(southstore, weststore, by = 'row.names', all = TRUE)
+southweststores
+midwestnortheast <-merge(midweststore, northeaststore, by = 'row.names', all = TRUE)
+midwestnortheast 
+allstores <- merge(southweststores, midwestnortheast, by = 'row.names', all = TRUE)
+view(allstores)
+```
+
+
+Top income
+```{r pressure, echo=FALSE}
+getwd()
+allcities <- read.csv("MGSC410Datasets/allcitiesdemoandsales.csv")
+allcities
+
+
+
+```
+```{r pressure, echo=FALSE}
+max_sales <- sales %>% 
+  group_by(Store) %>%
+  summarize(totalsales=sum(Weekly_Sales)) %>% arrange(desc(totalsales))
+max_sales
+
+max_sales2 <- sales %>% 
+  summarize(totalsales2=sum(Weekly_Sales))
+max_sales2
+
+maxsalesstoreDMA <- merge(max_sales, storesdmacleaned, by="Store")
+maxsalesstoreDMA
+
+maxsalespersqft <- maxsalesstoreDMA %>% select(c(Store, totalsales, Size, DMA)) %>% group_by(Store) %>%summarize(totalsalespersqft=(sum(totalsales)/Size)) %>%arrange(desc(totalsalespersqft))
+                                               
+maxsalespersqft    
+
+                                       
+ggplot(maxsalespersqft,aes(x=factor(Store),y=totalsalespersqft,fill=totalsalespersqft)) + geom_col()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5),plot.title = element_text(hjust = 0.5))+xlab("Store")+ggtitle("Sales per Size by Stores")
+```
+
+```{r pressure, echo=FALSE}
+average_sales_per_location <- sales %>% 
+  group_by(Store) %>%
+  summarize_at(vars(Weekly_Sales),list(average_sales_per_location = mean))
+average_sales_per_location %>% arrange(desc(average_sales_per_location))
+
+avgsalesstoreDMA <- merge(average_sales_per_location, storesdmacleaned, by="Store")
+avgsalesstoreDMA
+
+avgsalespersqft <- avgsalesstoreDMA %>% select(c(Store, average_sales_per_location, Size, DMA)) %>% group_by(Store, DMA) %>%summarize(avgsalespersqft=(sum(average_sales_per_location)/Size)) %>%arrange(desc(avgsalespersqft))
+
+avgsalespersqft
+
+                                       
+ggplot(avgsalespersqft,aes(x=factor(Store),y=avgsalespersqft,fill=avgsalespersqft)) + geom_col()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5),plot.title = element_text(hjust = 0.5))+xlab("Store")+ggtitle("Average Sales per Size by Stores")
+```
+
+```{r pressure, echo=FALSE}
+salesstoresdmaclean
+max_sales3 <- salesstoresdmaclean %>% 
+  group_by(DMA) %>%
+  summarize(totalsales3=sum(Weekly_Sales)) %>% arrange(desc(totalsales3))
+max_sales3$totalsales3 <-as.numeric(max_sales3$totalsales3)
+
+ggplot(max_sales3,aes(x=DMA,y=totalsales3,fill=totalsales3)) + geom_col()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5),plot.title = element_text(hjust = 0.5))+xlab("DMA")+ylab("Total Sales")+ggtitle("Total Sales per Size by Stores")
+
+
+max_sales4 <- salesstoresdmaclean %>% 
+  group_by(DMA) %>%
+  summarize(totalsalessqft4=(sum(Weekly_Sales)/(sum(Size)))) %>% arrange(desc(totalsalessqft4))
+max_sales4 
+
+average_sales_per_location5 <- salesstoresdmaclean %>% 
+  group_by(DMA) %>%
+  summarize_at(vars(Weekly_Sales),list(average_sales_per_location5 = mean))
+average_sales_per_location5 %>% arrange(desc(average_sales_per_location5))
+
+averagesales5<- salesstoresdmaclean %>% 
+  group_by(DMA) %>%
+  summarize(avgsalessqft5=(mean(Weekly_Sales))/(mean(Size)))
+
+
+averagesales5 %>% arrange(desc(averagesales5))
+
+
+```
+
+```{r pressure, echo=FALSE}
+HolidaySalesDMA2 <- holiday_sales_DMA %>%
+  select(Weekly_Sales,Holiday,Size, DMA) %>%
+  group_by(Holiday, DMA) %>%
+  summarise(average_sales11 = (mean(Weekly_Sales))/(mean(Size)))
+
+HolidaySalesDMA2 %>% arrange(desc(average_sales11))
+
+HolidaySalesDMATG5 <- HolidaySalesDMA2 %>% filter(Holiday=="Christmas") %>% arrange(desc(average_sales11))
+HolidaySalesDMATG5
+```
